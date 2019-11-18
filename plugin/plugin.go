@@ -5,7 +5,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
+	"Gaia/clioutput"
 	"Gaia/util"
 
 	"gopkg.in/ini.v1"
@@ -15,21 +17,28 @@ import (
 var IPs []string
 
 // OnOptions which service will be burst
-var OnOptions map[string]bool
+var OnOptions = make(map[string]bool)
+
+// ThreadNum thread num
+var ThreadNum int
+
+// CliOutput cli output
+var CliOutput = clioutput.NewCLIOutput()
 
 // Config plugin config
 type Config struct {
-	IPStr   string
-	options []string // which service will be burst
+	IPStr     string
+	Options   []string // which service will be burst
+	ThreadNum int
 }
 
 // Plugins a container to store plugin
-var Plugins map[string]Plugin
+var Plugins = make(map[string]Plugin)
 
 // Plugin plugin interface
 type Plugin interface {
 	Flag() bool
-	Start()
+	Start(*sync.WaitGroup)
 }
 
 // BurstCell a burst task cell
@@ -44,12 +53,13 @@ type BurstCell struct {
 func initConfig(config Config) {
 	var err error
 	IPs, err = util.ParseIPFormat(config.IPStr)
-	for _, v := range config.options {
+	for _, v := range config.Options {
 		OnOptions[v] = true
 	}
 	if err != nil {
 		panic(err)
 	}
+	ThreadNum = config.ThreadNum
 }
 
 // Start start all plugin from plugin container
@@ -57,10 +67,13 @@ func (config Config) Start() {
 	initConfig(config)
 	for name, plugin := range Plugins {
 		if plugin.Flag() {
-			go plugin.Start()
-			fmt.Printf("[*]Start plugin %s\n", name)
+			wg := new(sync.WaitGroup)
+			wg.Add(1)
+			go plugin.Start(wg)
+			CliOutput.StatusReport(fmt.Sprintf("[*]Start plugin %s\n", name))
+			wg.Wait()
 		} else {
-			fmt.Printf("[-]Skip plugin %s", name)
+			CliOutput.StatusReport(fmt.Sprintf("[-]Skip plugin %s", name))
 		}
 	}
 }
@@ -70,7 +83,7 @@ func NewBurstCell(burstType string) (burstCell BurstCell) {
 	// 读取配置
 	cfg, err := ini.Load("config.ini")
 	if err != nil {
-		fmt.Printf("Fail to read file: %v", err)
+		CliOutput.StatusReport(fmt.Sprintf("Fail to read file: %v", err))
 		os.Exit(1)
 	}
 	usernameStr := cfg.Section(burstType).Key("username").String()
