@@ -1,12 +1,15 @@
 package main
 
 import (
-	"Gaia/plugin"
-	_ "Gaia/plugin/ftp"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
+
+	"Gaia/plugin"
+	_ "Gaia/plugin/ftp"
+	_ "Gaia/plugin/ssh"
+	_ "Gaia/plugin/rdp"
 )
 
 var version = "0.1"

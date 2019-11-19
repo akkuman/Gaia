@@ -3,7 +3,11 @@ package util
 import (
 	"io/ioutil"
 	"strings"
+	"time"
 )
+
+// TimeOut general timeout
+var TimeOut = time.Duration(5 * time.Second)
 
 // fileToStringList generate list from a dic file
 func fileToStringList(path string) (strList []string, err error) {

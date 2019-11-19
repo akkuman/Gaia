@@ -1,14 +1,11 @@
-package ftp
+package rdp
 
 import (
 	"Gaia/plugin"
-	"Gaia/util"
 	"sync"
-
-	"github.com/jlaffaye/ftp"
 )
 
-var pluginName = "ftp"
+var pluginName = "rdp"
 
 // BurstPlugin ftp burst plugin
 type BurstPlugin struct {
@@ -25,17 +22,6 @@ func (BurstPlugin) Start(wgMain *sync.WaitGroup) {
 }
 
 func threadFunc(info [3]string) (success bool, err error) {
-	c, err := ftp.Dial(info[0], ftp.DialWithTimeout(util.TimeOut))
-	if err != nil {
-		return
-	}
-
-	err = c.Login(info[1], info[2])
-	if err != nil {
-		return
-	}
-	success = true
-	_ = c.Quit()
 	return
 }
 

@@ -65,17 +65,17 @@ func initConfig(config Config) {
 // Start start all plugin from plugin container
 func (config Config) Start() {
 	initConfig(config)
+	wg := new(sync.WaitGroup)
 	for name, plugin := range Plugins {
 		if plugin.Flag() {
-			wg := new(sync.WaitGroup)
 			wg.Add(1)
+			CliOutput.StatusReport(fmt.Sprintf("[*]Start plugin %s", name))
 			go plugin.Start(wg)
-			CliOutput.StatusReport(fmt.Sprintf("[*]Start plugin %s\n", name))
-			wg.Wait()
 		} else {
 			CliOutput.StatusReport(fmt.Sprintf("[-]Skip plugin %s", name))
 		}
 	}
+	wg.Wait()
 }
 
 // NewBurstCell generate a new burst task cell
