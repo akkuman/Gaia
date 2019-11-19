@@ -3,7 +3,6 @@ package ssh
 import (
 	"Gaia/plugin"
 	"Gaia/util"
-	"net"
 	"sync"
 
 	"golang.org/x/crypto/ssh"
@@ -31,26 +30,25 @@ func threadFunc(info [3]string) (success bool, err error) {
 		Auth: []ssh.AuthMethod{
 			ssh.Password(info[2]),
 		},
-		Timeout: util.TimeOut,
-		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-			return nil
-		},
+		Timeout:         util.TimeOut,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
 	client, err := ssh.Dial("tcp", info[0], config)
-	if err == nil {
-		defer client.Close()
-		session, err := client.NewSession()
-		errRet := session.Run("echo xsec")
-		if err == nil && errRet == nil {
-			defer session.Close()
-			success = true
-		}
+	if err != nil {
+		return
 	}
+	defer client.Close()
+	session, err := client.NewSession()
+	if err != nil {
+		return
+	}
+	defer session.Close()
+	success = true
 	return
 }
 
 func init() {
-	ftpPlugin := BurstPlugin{}
-	plugin.Register(pluginName, ftpPlugin)
+	sshPlugin := BurstPlugin{}
+	plugin.Register(pluginName, sshPlugin)
 }

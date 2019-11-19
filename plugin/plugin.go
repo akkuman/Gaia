@@ -30,7 +30,11 @@ type Config struct {
 	IPStr     string
 	Options   []string // which service will be burst
 	ThreadNum int
+	UserList  []string
+	PassList  []string
 }
+
+var configuration = Config{}
 
 // Plugins a container to store plugin
 var Plugins = make(map[string]Plugin)
@@ -52,7 +56,14 @@ type BurstCell struct {
 // InitConfig initialize config
 func initConfig(config Config) {
 	var err error
-	IPs, err = util.ParseIPFormat(config.IPStr)
+	iptemp := strings.Split(config.IPStr, ",")
+	for _, v := range iptemp {
+		iplist, err := util.ParseIPFormat(strings.TrimSpace(v))
+		if err != nil {
+			panic(err)
+		}
+		IPs = append(IPs, iplist...)
+	}
 	for _, v := range config.Options {
 		OnOptions[v] = true
 	}
@@ -60,6 +71,7 @@ func initConfig(config Config) {
 		panic(err)
 	}
 	ThreadNum = config.ThreadNum
+	configuration = config
 }
 
 // Start start all plugin from plugin container
@@ -98,6 +110,7 @@ func NewBurstCell(burstType string) (burstCell BurstCell) {
 	if err != nil {
 		panic(err)
 	}
+
 	for _, v := range strings.Split(PortStr, ",") {
 		item := strings.TrimSpace(v)
 		port, err := strconv.Atoi(item)
@@ -110,6 +123,14 @@ func NewBurstCell(burstType string) (burstCell BurstCell) {
 		panic("ip is uninitialized")
 	}
 	burstCell.IPs = IPs
+
+	// 用户命令行覆盖ini配置
+	if len(configuration.UserList) != 0 {
+		burstCell.Usernames = configuration.UserList
+	}
+	if len(configuration.PassList) != 0 {
+		burstCell.Passwords = configuration.PassList
+	}
 	return
 }
 

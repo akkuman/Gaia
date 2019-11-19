@@ -2,8 +2,11 @@ package plugin
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 )
+
+var mutex sync.Mutex
 
 // ThreadFunc thread execution cell
 type ThreadFunc func(info [3]string) (success bool, err error)
@@ -57,7 +60,7 @@ func thread(pluginName string, tasks chan [3]string, wg *sync.WaitGroup, threadN
 		CliOutput.LastPath(fmt.Sprintf("[!]Start: %s %s %s %s", pluginName, cell[0], cell[1], cell[2]), threadNo)
 		success, err := threadfunc(cell)
 		if err != nil {
-			CliOutput.LastPath(fmt.Sprintf("[x]Fail: %s %s", pluginName, err.Error()), threadNo)
+			CliOutput.LastPath(fmt.Sprintf("[x]Fail: %s %s", pluginName, strings.TrimSpace(err.Error())), threadNo)
 			continue
 		}
 		if success {
